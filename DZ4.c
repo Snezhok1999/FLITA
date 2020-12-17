@@ -3,30 +3,17 @@
 #include <string.h>
 
 void function(char ***name, int ***conn, int num, int delete){
-    num--;
-    int **conn2 = calloc(num, sizeof(int*));
     for(int i=0; i<num; i++){
-        conn2[i] = calloc(num, sizeof(int));
-    }
-    
-    char **name2 = calloc(num, sizeof(char*));
-    
-    int ic=0, jc=0;
-    for(int i=0; i<num; i++){
-        if(i==delete){ic = 1;}
-        name2[i] = (*name)[i+ic];
-        for(int j=0; j<num; j++){
-            if(j==delete){jc = 1;}
-            conn2[i][j] = (*conn)[i+ic][j+jc];
-        }
+        (*conn)[i][delete] = 0;
+        (*conn)[delete][i] = 0;
     }
     
     int *stepen = calloc(num, sizeof(int));
 
     for(int i=0; i<num; i++){
         for(int j=0; j<num; j++){
-            stepen[i] += conn2[i][j];
-            stepen[i] += conn2[j][i];
+            stepen[i] += (*conn)[i][j];
+            stepen[i] += (*conn)[j][i];
         }
     }
 
@@ -38,25 +25,22 @@ void function(char ***name, int ***conn, int num, int delete){
                 stepen[j] = stepen[j+gap];
                 stepen[j+gap] = temp;
 
-                int *temp_conn = conn2[j];
-                conn2[j] = conn2[j+gap];
-                conn2[j+gap] = temp_conn;
+                int *temp_conn = (*conn)[j];
+                (*conn)[j] = (*conn)[j+gap];
+                (*conn)[j+gap] = temp_conn;
                 
                 for(int k=0; k<num; k++){
-                    int temp_conn2 = conn2[k][j];
-                    conn2[k][j] = conn2[k][j+gap];
-                    conn2[k][j+gap] = temp_conn2;
+                    int temp_conn2 = (*conn)[k][j];
+                    (*conn)[k][j] = (*conn)[k][j+gap];
+                    (*conn)[k][j+gap] = temp_conn2;
                 }
                 
-                char *temp_name = name2[j];
-                name2[j] = name2[j+gap];
-                name2[j+gap] = temp_name;
+                char *temp_name = (*name)[j];
+                (*name)[j] = (*name)[j+gap];
+                (*name)[j+gap] = temp_name;
             }
         }
     }
-    
-    *name = name2;
-    *conn = conn2;
 }
 
 char *getarr(int all){
@@ -180,33 +164,22 @@ int main(){
         }
         printf("\n");
     }
-    
-    printf("Enter num element to delete: ");
-    int delete;
-    scanf("%d", &delete);
-    function(&name, &conn, n, delete);
-    n--;
-    
-    printf("Connection table\n");
-    for(int i=0; i<n; i++) {
-        printf("%s\t", name[i]);
-        for (int j=0; j<n; j++) {
-            printf("%d ", conn[i][j]);
-        }
-        printf("\n");
-    }
 
-    
     char strsys[1024] = {0};
+    char strsys2[1024] = {0};
     strcat(strsys, "echo '");
+    strcat(strsys2, "echo '");
+
 
     char arr[3] = "";
     if(graph == 2){
         strcat(strsys, "digraph G {");
         strcat(arr, "->");
+        strcat(strsys2, "digraph G {");
     } else {
         strcat(strsys, "graph G {");
         strcat(arr, "--");
+        strcat(strsys2, "graph G {");
     }
 
     for(int i=0; i<n; i++){
@@ -226,6 +199,41 @@ int main(){
     strcat(strsys, "}' | dot -Tpng > ./graph.png");
 
     system(strsys);
+
+    
+    printf("Enter num element to delete: ");
+    int delete;
+    scanf("%d", &delete);
+    function(&name, &conn, n, delete-1);
+    
+    printf("Connection table\n");
+    for(int i=0; i<n; i++) {
+        printf("%s\t", name[i]);
+        for (int j=0; j<n; j++) {
+            printf("%d ", conn[i][j]);
+        }
+        printf("\n");
+    }
+
+    
+
+    for(int i=0; i<n; i++){
+        strcat(strsys2, name[i]);
+        strcat(strsys2, "; ");
+    }
+    for(int i=0; i<n; i++){
+        for(int j=0; j<n; j++){
+            for(int k=0; k<conn[i][j]; k++){
+                strcat(strsys2, name[i]);
+                strcat(strsys2, arr);
+                strcat(strsys2, name[j]);
+                strcat(strsys2, "; ");
+            }
+        }
+    }
+    strcat(strsys2, "}' | dot -Tpng > ./graph_after.png");
+
+    system(strsys2);
 
     return 0;
 }
